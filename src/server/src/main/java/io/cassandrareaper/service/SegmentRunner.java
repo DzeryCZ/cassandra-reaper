@@ -81,7 +81,6 @@ final class SegmentRunner implements RepairStatusHandler, Runnable {
   private final double intensity;
   private final RepairParallelism validationParallelism;
   private final String clusterName;
-  private final Cluster cluster;
   private final RepairRunner repairRunner;
   private final RepairUnit repairUnit;
   private volatile int repairNo;
@@ -119,7 +118,6 @@ final class SegmentRunner implements RepairStatusHandler, Runnable {
     this.intensity = intensity;
     this.validationParallelism = validationParallelism;
     this.clusterName = clusterName;
-    this.cluster = context.storage.getCluster(this.clusterName);
     this.repairUnit = repairUnit;
     this.repairRunner = repairRunner;
     this.segmentFailed = new AtomicBoolean(false);
@@ -262,18 +260,12 @@ final class SegmentRunner implements RepairStatusHandler, Runnable {
     Thread.currentThread().setName(clusterName + ":" + segment.getRunId() + ":" + segmentId);
 
     try (Timer.Context cxt = context.metricRegistry.timer(metricNameForRunRepair(segment)).time()) {
-      Cluster cluster = context.storage.getCluster(clusterName);
-      JmxProxy coordinator = clusterFacade.connect(cluster, potentialCoordinators);
-
       if (SEGMENT_RUNNERS.containsKey(segmentId)) {
         LOG.error("SegmentRunner already exists for segment with ID: {}", segmentId);
         throw new ReaperException("SegmentRunner already exists for segment with ID: " + segmentId);
       }
 
-      String keyspace = repairUnit.getKeyspaceName();
-      boolean fullRepair = !repairUnit.getIncrementalRepair();
-
-      if (!canRepair(segment)) {
+      if (RepairSegment.State.NOT_STARTED != segment.getState()) {
         LOG.info(
             "Cannot run segment {} for repair {} at the moment. Will try again later", segmentId, segment.getRunId());
 
@@ -282,6 +274,11 @@ final class SegmentRunner implements RepairStatusHandler, Runnable {
         } catch (InterruptedException ignore) { }
         return false;
       }
+
+      Cluster cluster = context.storage.getCluster(clusterName);
+      JmxProxy coordinator = clusterFacade.connect(cluster, potentialCoordinators);
+      String keyspace = repairUnit.getKeyspaceName();
+      boolean fullRepair = !repairUnit.getIncrementalRepair();
 
       try (Timer.Context cxt1 = context.metricRegistry.timer(metricNameForRepairing(segment)).time()) {
         try {
@@ -456,14 +453,6 @@ final class SegmentRunner implements RepairStatusHandler, Runnable {
         cleanHostName,
         clusterName.replaceAll("[^A-Za-z0-9]", ""),
         repairUnit.getKeyspaceName().replaceAll("[^A-Za-z0-9]", ""));
-  }
-
-  boolean canRepair(RepairSegment segment) {
-
-    if (RepairSegment.State.NOT_STARTED == segment.getState()) {
-      return true;
-    }
-    return false;
   }
 
   /**

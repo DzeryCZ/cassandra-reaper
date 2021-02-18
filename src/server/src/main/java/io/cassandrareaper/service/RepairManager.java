@@ -115,25 +115,6 @@ public final class RepairManager implements AutoCloseable {
       long repairTimeout,
       TimeUnit repairTimeoutTimeUnit,
       long retryDelay,
-      TimeUnit retryDelayTimeUnit) throws ReaperException {
-
-    return create(
-        context,
-        ClusterFacade.create(context),
-        executor,
-        repairTimeout,
-        repairTimeoutTimeUnit,
-        retryDelay,
-        retryDelayTimeUnit,
-        1);
-  }
-
-  public static RepairManager create(
-      AppContext context,
-      ScheduledExecutorService executor,
-      long repairTimeout,
-      TimeUnit repairTimeoutTimeUnit,
-      long retryDelay,
       TimeUnit retryDelayTimeUnit,
       int maxParallelRepairs) throws ReaperException {
 

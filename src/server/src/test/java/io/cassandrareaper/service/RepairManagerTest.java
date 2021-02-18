@@ -88,7 +88,8 @@ public final class RepairManagerTest {
         500,
         TimeUnit.MILLISECONDS,
         1,
-        TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS,
+        1);
 
     repairManager = Mockito.spy(repairManager);
     context.repairManager = repairManager;
@@ -164,7 +165,8 @@ public final class RepairManagerTest {
         500,
         TimeUnit.MILLISECONDS,
         1,
-        TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS,
+        1);
 
     repairManager = Mockito.spy(repairManager);
     context.repairManager = repairManager;
@@ -243,7 +245,8 @@ public final class RepairManagerTest {
         500,
         TimeUnit.MILLISECONDS,
         1,
-        TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS,
+        1);
 
     repairManager = Mockito.spy(repairManager);
     context.repairManager = repairManager;
@@ -319,7 +322,8 @@ public final class RepairManagerTest {
         500,
         TimeUnit.MILLISECONDS,
         1,
-        TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS,
+        1);
 
     repairManager = Mockito.spy(repairManager);
     context.repairManager = repairManager;
@@ -377,7 +381,8 @@ public final class RepairManagerTest {
         500,
         TimeUnit.MILLISECONDS,
         1,
-        TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS,
+        1);
 
     final String ksName = "reaper";
     final Set<String> cfNames = Sets.newHashSet("reaper");

@@ -812,7 +812,7 @@ public final class CassandraStorage implements IStorage, IDistributedStorage {
       if (100 <= nbRanges) {
         // Limit batch size to prevent queries being rejected
         futures.add(session.executeAsync(repairRunBatch));
-        repairRunBatch = new BatchStatement(BatchStatement.Type.UNLOGGED);
+        repairRunBatch = new BatchStatement();
         nbRanges = 0;
       }
     }

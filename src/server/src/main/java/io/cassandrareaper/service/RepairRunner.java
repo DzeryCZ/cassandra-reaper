@@ -289,7 +289,7 @@ final class RepairRunner implements Runnable {
 
     // We have an empty slot, so let's start new segment runner if possible.
     // When in sidecar mode, filter on ranges that the local node is a replica for only.
-    LOG.info("Attempting to run new segment for range");
+    LOG.info("Attempting to run new segment...");
     List<RepairSegment> nextRepairSegments
         = context.config.isInSidecarMode()
             ? ((IDistributedStorage) context.storage)
@@ -306,6 +306,7 @@ final class RepairRunner implements Runnable {
       JmxProxy coordinator = clusterFacade.connect(cluster, potentialReplicas);
       if (nodesReadyForNewRepair(coordinator, segment, segment.getReplicas(), repairRunId)) {
         nextRepairSegment = Optional.of(segment);
+        break;
       }
     }
     if (!nextRepairSegment.isPresent()) {
