@@ -70,6 +70,8 @@ import org.apache.cassandra.service.ActiveRepairService;
 import org.apache.cassandra.utils.progress.ProgressEventType;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.awaitility.Duration;
+import org.awaitility.core.ConditionTimeoutException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
 import org.junit.Before;
@@ -78,6 +80,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -96,6 +99,7 @@ public final class RepairRunnerTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(RepairRunnerTest.class);
   private static final Set<String> TABLES = ImmutableSet.of("table1");
+  private static final Duration POLL_INTERVAL = Duration.TWO_SECONDS;
 
   private final Cluster cluster = Cluster.builder()
             .withName("test_" + RandomStringUtils.randomAlphabetic(12))
@@ -450,28 +454,7 @@ public final class RepairRunnerTest {
             .repairThreadCount(REPAIR_THREAD_COUNT))
         .getId();
     DateTimeUtils.setCurrentMillisFixed(TIME_RUN);
-    RepairRun run = storage.addRepairRun(
-            RepairRun.builder(cluster.getName(), cf)
-                .intensity(INTENSITY)
-                .segmentCount(1)
-                .repairParallelism(RepairParallelism.PARALLEL)
-                .tables(TABLES),
-            Lists.newArrayList(
-                RepairSegment.builder(
-                        Segment.builder()
-                            .withTokenRange(new RingRange(BigInteger.ZERO, new BigInteger("100")))
-                            .withReplicas(replicas)
-                            .build(),
-                        cf)
-                    .withState(RepairSegment.State.RUNNING)
-                    .withStartTime(DateTime.now())
-                    .withCoordinatorHost("reaper"),
-                RepairSegment.builder(
-                    Segment.builder()
-                        .withTokenRange(new RingRange(new BigInteger("100"), new BigInteger("200")))
-                        .withReplicas(replicas)
-                        .build(),
-                    cf)));
+    RepairRun run = generateRepairRunForPendingCompactions(INTENSITY, storage, cf);
     final UUID RUN_ID = run.getId();
     final UUID SEGMENT_ID = storage.getNextFreeSegments(run.getId()).get(0).getId();
     assertEquals(storage.getRepairSegment(RUN_ID, SEGMENT_ID).get().getState(), RepairSegment.State.NOT_STARTED);
@@ -567,7 +550,7 @@ public final class RepairRunnerTest {
     assertEquals(RepairRun.RunState.DONE, storage.getRepairRun(RUN_ID).get().getRunState());
   }
 
-  @Test
+  @Test(expected = ConditionTimeoutException.class)
   public void testTooManyPendingCompactions()
     throws InterruptedException, ReaperException, MalformedObjectNameException,
       ReflectionException, IOException {
@@ -602,28 +585,7 @@ public final class RepairRunnerTest {
             .repairThreadCount(REPAIR_THREAD_COUNT))
         .getId();
     DateTimeUtils.setCurrentMillisFixed(TIME_RUN);
-    RepairRun run = storage.addRepairRun(
-            RepairRun.builder(cluster.getName(), cf)
-                .intensity(INTENSITY)
-                .segmentCount(1)
-                .repairParallelism(RepairParallelism.PARALLEL)
-                .tables(TABLES),
-            Lists.newArrayList(
-                RepairSegment.builder(
-                        Segment.builder()
-                            .withTokenRange(new RingRange(BigInteger.ZERO, new BigInteger("100")))
-                            .withReplicas(replicas)
-                            .build(),
-                        cf)
-                    .withState(RepairSegment.State.RUNNING)
-                    .withStartTime(DateTime.now())
-                    .withCoordinatorHost("reaper"),
-                RepairSegment.builder(
-                    Segment.builder()
-                        .withTokenRange(new RingRange(new BigInteger("100"), new BigInteger("200")))
-                        .withReplicas(replicas)
-                        .build(),
-                    cf)));
+    RepairRun run = generateRepairRunForPendingCompactions(INTENSITY, storage, cf);
     final UUID RUN_ID = run.getId();
     final UUID SEGMENT_ID = storage.getNextFreeSegments(run.getId()).get(0).getId();
     assertEquals(storage.getRepairSegment(RUN_ID, SEGMENT_ID).get().getState(), RepairSegment.State.NOT_STARTED);
@@ -714,9 +676,41 @@ public final class RepairRunnerTest {
         run.with().runState(RepairRun.RunState.RUNNING).startTime(DateTime.now()).build(RUN_ID));
 
     context.repairManager.resumeRunningRepairRuns();
-    // Wait for 30s and make sure it's still in RUNNING state as segments can't be processed due to pending compactions
-    Thread.sleep(30000);
+    // Make sure it's still in RUNNING state as segments can't be processed due to pending compactions
+    await().with().pollInterval(POLL_INTERVAL).atMost(30, SECONDS).until(() -> {
+      if (RepairRun.RunState.RUNNING != storage.getRepairRun(RUN_ID).get().getRunState()) {
+        return true;
+      }
+      return false;
+    });
+    // If we get here then there's a problem...
+    // An exception should be thrown by Awaitility as we should not reach a status different than RUNNING
     assertEquals(RepairRun.RunState.RUNNING, storage.getRepairRun(RUN_ID).get().getRunState());
+  }
+
+  private RepairRun generateRepairRunForPendingCompactions(final double intensity, final IStorage storage, UUID cf) {
+    return storage.addRepairRun(
+            RepairRun.builder(cluster.getName(), cf)
+                .intensity(intensity)
+                .segmentCount(1)
+                .repairParallelism(RepairParallelism.PARALLEL)
+                .tables(TABLES),
+            Lists.newArrayList(
+                RepairSegment.builder(
+                        Segment.builder()
+                            .withTokenRange(new RingRange(BigInteger.ZERO, new BigInteger("100")))
+                            .withReplicas(replicas)
+                            .build(),
+                        cf)
+                    .withState(RepairSegment.State.RUNNING)
+                    .withStartTime(DateTime.now())
+                    .withCoordinatorHost("reaper"),
+                RepairSegment.builder(
+                    Segment.builder()
+                        .withTokenRange(new RingRange(new BigInteger("100"), new BigInteger("200")))
+                        .withReplicas(replicas)
+                        .build(),
+                    cf)));
   }
 
   @Test
