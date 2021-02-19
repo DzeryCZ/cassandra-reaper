@@ -230,7 +230,7 @@ public final class RepairRunnerTest {
     when(clusterFacade.nodeIsAccessibleThroughJmx(any(), any())).thenReturn(true);
     when(clusterFacade.tokenRangeToEndpoint(any(), anyString(), any())).thenReturn(Lists.newArrayList(NODES));
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(0).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(0)).build());
     when(clusterFacade.getRangeToEndpointMap(any(), anyString()))
         .thenReturn((Map)ImmutableMap.of(Lists.newArrayList("0", "100"), Lists.newArrayList(NODES)));
 
@@ -382,7 +382,7 @@ public final class RepairRunnerTest {
     when(clusterFacade.getRangeToEndpointMap(any(), anyString()))
         .thenReturn((Map)ImmutableMap.of(Lists.newArrayList("0", "100"), Lists.newArrayList(NODES)));
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(0).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(0)).build());
     context.repairManager
         = RepairManager.create(
             context,
@@ -499,7 +499,7 @@ public final class RepairRunnerTest {
             Lists.newArrayList("0", "100"), Lists.newArrayList(NODES),
             Lists.newArrayList("100", "200"), Lists.newArrayList(NODES)));
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(0).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(0)).build());
 
     context.repairManager = RepairManager.create(
         context,
@@ -651,7 +651,7 @@ public final class RepairRunnerTest {
             Lists.newArrayList("0", "100"), Lists.newArrayList(NODES),
             Lists.newArrayList("100", "200"), Lists.newArrayList(NODES)));
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(100).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(100)).build());
 
     context.repairManager = RepairManager.create(
         context,
@@ -855,8 +855,7 @@ public final class RepairRunnerTest {
                         Segment.builder()
                             .withTokenRange(new RingRange(BigInteger.ZERO, new BigInteger("100")))
                             .withReplicas(NODES_MAP)
-                            .build(),
-                        cf)
+                            .build(), cf)
                     .withState(RepairSegment.State.RUNNING)
                     .withStartTime(DateTime.now())
                     .withCoordinatorHost("reaper"),
@@ -864,8 +863,7 @@ public final class RepairRunnerTest {
                     Segment.builder()
                         .withTokenRange(new RingRange(new BigInteger("100"), new BigInteger("200")))
                         .withReplicas(NODES_MAP)
-                        .build(),
-                    cf)));
+                        .build(), cf)));
     final UUID RUN_ID = run.getId();
     final UUID SEGMENT_ID = storage.getNextFreeSegments(run.getId()).get(0).getId();
     assertEquals(storage.getRepairSegment(RUN_ID, SEGMENT_ID).get().getState(), RepairSegment.State.NOT_STARTED);
@@ -894,7 +892,10 @@ public final class RepairRunnerTest {
             Lists.newArrayList("100", "200"), Lists.newArrayList(NODES)));
     when(clusterFacade.getEndpointToHostId(any())).thenReturn(NODES_MAP);
     when(clusterFacade.listActiveCompactions(any())).thenReturn(
-        CompactionStats.builder().withActiveCompactions(Collections.emptyList()).withPendingCompactions(0).build());
+        CompactionStats.builder()
+          .withActiveCompactions(Collections.emptyList())
+          .withPendingCompactions(Optional.of(0))
+          .build());
     context.repairManager = RepairManager.create(
         context,
         clusterFacade,
@@ -909,7 +910,6 @@ public final class RepairRunnerTest {
         .then(
             (invocation) -> {
               final int repairNumber = repairNumberCounter.getAndIncrement();
-
               new Thread() {
                 @Override
                 public void run() {
@@ -1138,7 +1138,7 @@ public final class RepairRunnerTest {
     when(clusterFacade.connect(any(Cluster.class), any())).thenReturn(proxy);
     when(clusterFacade.nodeIsAccessibleThroughJmx(any(), any())).thenReturn(true);
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(3).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(3)).build());
     when(clusterFacade.getRangeToEndpointMap(any(), anyString()))
       .thenReturn((Map)ImmutableMap.of(Lists.newArrayList("0", "100"), Lists.newArrayList(NODES)));
 
@@ -1151,6 +1151,6 @@ public final class RepairRunnerTest {
     Optional<CompactionStats> optional = result.getRight().call();
     assertTrue(optional.isPresent());
     CompactionStats metrics = optional.get();
-    assertEquals(3, metrics.getPendingCompactions().intValue());
+    assertEquals(3, metrics.getPendingCompactions().get().intValue());
   }
 }

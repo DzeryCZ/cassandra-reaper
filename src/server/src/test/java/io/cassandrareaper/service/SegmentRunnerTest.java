@@ -195,7 +195,7 @@ public final class SegmentRunnerTest {
 
     when(clusterFacade.nodeIsAccessibleThroughJmx(any(), any())).thenReturn(true);
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(0).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(0)).build());
 
     SegmentRunner sr = SegmentRunner
         .create(context, clusterFacade, segmentId, COORDS, 100, 0.5, PARALLEL, "reaper", ru, TABLES, rr);
@@ -346,7 +346,7 @@ public final class SegmentRunnerTest {
     when(clusterFacade.tokenRangeToEndpoint(any(), anyString(), any()))
         .thenReturn(Lists.newArrayList(cf.getNodes()));
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(0).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(0)).build());
 
     SegmentRunner sr = SegmentRunner
         .create(context, clusterFacade, segmentId, COORDS, 5000, 0.5, PARALLEL, "reaper", ru, TABLES, rr);
@@ -491,7 +491,7 @@ public final class SegmentRunnerTest {
     when(clusterFacade.tokenRangeToEndpoint(any(), anyString(), any()))
         .thenReturn(Lists.newArrayList(cf.getNodes()));
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(0).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(0)).build());
 
     SegmentRunner sr = SegmentRunner
         .create(context, clusterFacade, segmentId, COORDS, 5000, 0.5, PARALLEL, "reaper", ru, TABLES, rr);
@@ -632,7 +632,7 @@ public final class SegmentRunnerTest {
     when(clusterFacade.tokenRangeToEndpoint(any(), anyString(), any()))
         .thenReturn(Lists.newArrayList(cf.getNodes()));
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(0).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(0)).build());
 
     SegmentRunner sr = SegmentRunner
         .create(context, clusterFacade, segmentId, COORDS, 5000, 0.5, PARALLEL, "reaper", ru, TABLES, rr);
@@ -774,7 +774,7 @@ public final class SegmentRunnerTest {
     when(clusterFacade.tokenRangeToEndpoint(any(), anyString(), any()))
         .thenReturn(Lists.newArrayList(cf.getNodes()));
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(0).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(0)).build());
 
     SegmentRunner sr = SegmentRunner
         .create(context, clusterFacade, segmentId, COORDS, 5000, 0.5, PARALLEL, "reaper", ru, TABLES, rr);
@@ -917,7 +917,7 @@ public final class SegmentRunnerTest {
     when(clusterFacade.tokenRangeToEndpoint(any(), anyString(), any()))
         .thenReturn(Lists.newArrayList(cf.getNodes()));
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(0).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(0)).build());
 
     SegmentRunner sr = SegmentRunner
         .create(context, clusterFacade, segmentId, COORDS, 5000, 0.5, PARALLEL, "reaper", ru, TABLES, rr);
@@ -1061,7 +1061,7 @@ public final class SegmentRunnerTest {
     when(clusterFacade.tokenRangeToEndpoint(any(), anyString(), any()))
         .thenReturn(Lists.newArrayList(cf.getNodes()));
     when(clusterFacade.listActiveCompactions(any())).thenReturn(CompactionStats.builder().withActiveCompactions(
-        Collections.emptyList()).withPendingCompactions(0).build());
+        Collections.emptyList()).withPendingCompactions(Optional.of(0)).build());
 
     SegmentRunner sr = SegmentRunner
         .create(context, clusterFacade, segmentId, COORDS, 5000, 0.5, PARALLEL, "reaper", ru, TABLES, rr);

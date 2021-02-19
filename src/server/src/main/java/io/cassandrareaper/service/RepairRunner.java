@@ -382,8 +382,8 @@ final class RepairRunner implements Runnable {
         Optional<CompactionStats> result = pair.getRight().get();
         if (result.isPresent()) {
           CompactionStats metrics = result.get();
-          int pendingCompactions = metrics.getPendingCompactions();
-          if (pendingCompactions > context.config.getMaxPendingCompactions()) {
+          Optional<Integer> pendingCompactions = metrics.getPendingCompactions();
+          if (pendingCompactions.isPresent() && pendingCompactions.get() > context.config.getMaxPendingCompactions()) {
             String msg = String.format(
                 "postponed repair segment %s because of too many pending compactions (%s > %s) on host %s",
                 segmentId, pendingCompactions, context.config.getMaxPendingCompactions(), pair.getLeft());
